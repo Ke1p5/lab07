@@ -1,10 +1,10 @@
 package it.unibo.inner.test.impl;
 
-import it.unibo.inner.api.IterableWithPolicy;
-import java.util.function.Predicate;
+import it.unibo.inner.api.*;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
-public class IterableWithPolicyImpl<T> implements IterableWithPolicy<T>{
+public class IterableWithPolicyImpl<T> implements IterableWithPolicy<T> {
     private T[] array;
     private Predicate<T> filter;
 
@@ -30,20 +30,27 @@ public class IterableWithPolicyImpl<T> implements IterableWithPolicy<T>{
 
         @Override
         public boolean hasNext() {
-            return (this.current < IterableWithPolicyImpl.this.array.length) 
-                && (IterableWithPolicyImpl.this.filter.test(IterableWithPolicyImpl.this.array[this.current + 1]));
+            T temp;
+            for (; this.current < array.length; this.current++) {
+                temp = array[this.current];
+                if (filter.test(temp)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         @Override
         public T next() {
-            return IterableWithPolicyImpl.this.filter.test(IterableWithPolicyImpl.this.array[this.current + 1])
-                ? IterableWithPolicyImpl.this.array[this.current++] : null;
+            if (this.hasNext()){
+                return IterableWithPolicyImpl.this.array[this.current++];
+            }
+            throw new NoSuchElementException();
         }
-        
     }
     
-     public Iterator<T> iterator() {
-        return this.new Iter();
+    public Iterator<T> iterator() {
+        return new Iter();
     }
 
     public T[] getArray() {
@@ -52,10 +59,6 @@ public class IterableWithPolicyImpl<T> implements IterableWithPolicy<T>{
 
     public Predicate<T> getFilter() {
         return this.filter;
-    }
-
-    public void setIterationPolicy(Predicate<T> filter) {
-        this.filter = filter;
     }
 
     public String toString() {
@@ -70,5 +73,10 @@ public class IterableWithPolicyImpl<T> implements IterableWithPolicy<T>{
         }
         line = line + "]";
         return line;    
+    }
+
+    @Override
+    public void setIterationPolicy(Predicate<T> filter) {
+        this.filter = filter;
     }
 }
